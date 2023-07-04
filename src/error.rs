@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     ImpossibleRcRelease,
     InvalidIndex,
@@ -8,9 +9,9 @@ pub enum Error {
     CannotIncreasePriority,
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match *self {
             Self::ImpossibleRcRelease => {
                 write!(f, "cannot release rc due to outstanding reference")
             }

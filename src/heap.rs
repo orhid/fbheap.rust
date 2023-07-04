@@ -127,7 +127,7 @@ where
 }
 
 /// fibonacci queue (almost, the get first is not strictly O(1), sorry)
-trait FbQueue<T, Priority>: FbQueueHelper<T, Priority>
+pub trait FbQueue<T, Priority>: FbQueueHelper<T, Priority>
 where
     Priority: Ord,
 {
@@ -304,7 +304,7 @@ macro_rules! make_root_fns {
 /* # simple queue */
 
 /// fibonacci queue implemented for values that do not implement copy or hash
-struct SimpleQueue<T, Priority>
+pub struct SimpleQueue<T, Priority>
 where
     T: Eq,
     Priority: Eq,
@@ -372,7 +372,7 @@ where
 /// fibonacci queue implemented for values which are Copy and Hash
 /// however, if the Copy is slow, so will be the queue
 /// since it copies the value every time it is input into the queue
-struct HashQueue<T, Priority>
+pub struct HashQueue<T, Priority>
 where
     T: Eq + Clone + Hash,
     Priority: Eq,
