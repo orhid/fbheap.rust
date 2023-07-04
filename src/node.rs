@@ -1,55 +1,72 @@
-use std::{
-    cell::RefCell,
-    cmp::Ordering,
-    // hash::{Hash, Hasher},
-    rc::Rc,
-};
+use crate::error::Error;
+use core::{cell::RefCell, cmp::Ordering};
+use std::rc::Rc;
 
-pub type NodeRef<T, Priority> = Rc<RefCell<NodeCore<T, Priority>>>;
+pub type NRef<T, Priority> = Rc<RefCell<NCore<T, Priority>>>;
 
-pub trait FbNode<T, Priority>: Clone + Ord {
+pub trait NPrpt<T, Priority>: Clone + Ord {
     fn new_node(t: T, priority: Priority) -> Self;
-    fn rank(&self) -> usize;
-    fn pair(self) -> Result<(T, Priority), &'static str>;
+
+    /** # Errors
+    will error if the reference count on self exceeds one
+    */
+    fn pair(self) -> Result<(T, Priority), Error>;
     // fn pair_ref(&self) -> (&T, &Priority);
 
+    /* # values */
+    fn has_higher_priority(&self, priority: &Priority) -> bool;
     fn set_priority(&self, priority: Priority);
     fn has_value(&self, t: &T) -> bool;
 
+    /* # mark */
     fn mark(&self);
     fn unmark(&self);
     fn is_marked(&self) -> bool;
 
+    /* # parents */
     fn get_parent(&self) -> Option<Self>;
     fn set_parent(&self, parent: Self);
     fn remove_parent(&self);
 
+    /* # children */
+    fn rank(&self) -> usize;
     fn insert_child(&self, child: Self);
-    fn remove_child(&self, child: &Self) -> Result<(), &'static str>;
+
+    /** # Errors
+    will error if the child is not found
+    */
+    fn remove_child(&self, child: &Self) -> Result<(), Error>;
     fn get_children(&self) -> Vec<Self>;
     fn drain_children(&self) -> Vec<Self>;
 
+    /* # ops */
     fn link(&mut self, other: &mut Self);
 }
 
 #[derive(PartialEq, Eq)]
-pub struct NodeCore<T, Priority>
+pub struct NCore<T, Priority>
 where
     T: Eq,
     Priority: Eq,
 {
+    /// held value
     t: T,
+    /// priority of the held value
     priority: Priority,
-    parent: Option<NodeRef<T, Priority>>,
-    children: Vec<NodeRef<T, Priority>>,
+    /// parent node in the tree structure
+    parent: Option<NRef<T, Priority>>,
+    /// children in the tree structure
+    children: Vec<NRef<T, Priority>>,
+    /// flag for whether this node has lost any children already
     marked: bool,
 }
 
-impl<T, Priority> NodeCore<T, Priority>
+impl<T, Priority> NCore<T, Priority>
 where
     T: Eq,
     Priority: Eq,
 {
+    /// create ampty node
     const fn new(t: T, priority: Priority) -> Self {
         Self {
             t,
@@ -60,8 +77,9 @@ where
         }
     }
 
-    #[allow(clippy::missing_const_for_fn)]
     // this cannot actually be a constant function
+    #[allow(clippy::missing_const_for_fn)]
+    /// destructure the node into patrs relevant to the outside
     fn pair(self) -> (T, Priority) {
         (self.t, self.priority)
     }
@@ -73,7 +91,7 @@ where
     */
 }
 
-impl<T, Priority> PartialOrd for NodeCore<T, Priority>
+impl<T, Priority> PartialOrd for NCore<T, Priority>
 where
     T: Eq,
     Priority: Eq + PartialOrd,
@@ -83,7 +101,7 @@ where
     }
 }
 
-impl<T, Priority> Ord for NodeCore<T, Priority>
+impl<T, Priority> Ord for NCore<T, Priority>
 where
     T: Eq,
     Priority: Eq + Ord,
@@ -94,7 +112,7 @@ where
 }
 
 /*
-impl<T, Priority> Hash for NodeCore<T, Priority>
+impl<T, Priority> Hash for NCore<T, Priority>
 where
     T: Eq + Hash,
     Priority: Eq + Ord + Hash,
@@ -106,22 +124,22 @@ where
 }
 */
 
-impl<T, Priority> FbNode<T, Priority> for NodeRef<T, Priority>
+impl<T, Priority> NPrpt<T, Priority> for NRef<T, Priority>
 where
     T: Eq,
     Priority: Eq + Ord,
 {
     fn new_node(t: T, priority: Priority) -> Self {
-        Self::new(RefCell::new(NodeCore::new(t, priority)))
+        Self::new(RefCell::new(NCore::new(t, priority)))
     }
 
     fn rank(&self) -> usize {
         self.borrow().children.len()
     }
 
-    fn pair(self) -> Result<(T, Priority), &'static str> {
+    fn pair(self) -> Result<(T, Priority), Error> {
         Ok(Self::into_inner(self)
-            .ok_or("could not release rc")?
+            .ok_or(Error::ImpossibleRcRelease)?
             .into_inner()
             .pair())
     }
@@ -131,6 +149,10 @@ where
         self.borrow().pair_ref()
     }
     */
+
+    fn has_higher_priority(&self, priority: &Priority) -> bool {
+        self.borrow().priority > *priority
+    }
 
     fn set_priority(&self, priority: Priority) {
         self.borrow_mut().priority = priority;
@@ -168,14 +190,13 @@ where
         self.borrow_mut().children.push(child);
     }
 
-    fn remove_child(&self, child: &Self) -> Result<(), &'static str> {
-        // -> Result?
+    fn remove_child(&self, child: &Self) -> Result<(), Error> {
         let index = self
             .borrow()
             .children
             .iter()
             .position(|x| x == child)
-            .ok_or("not a child")?;
+            .ok_or(Error::InvalidIndex)?;
         self.borrow_mut().children.swap_remove(index);
         Ok(())
     }
@@ -196,7 +217,6 @@ where
 
         bigger.set_parent(smaller.clone());
         smaller.insert_child(bigger.clone());
-        // probably unmarking
-        todo!();
+        smaller.unmark();
     }
 }
