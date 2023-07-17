@@ -1,4 +1,3 @@
-#![warn(clippy::cargo)]
 #![feature(let_chains)]
 
 pub mod error;

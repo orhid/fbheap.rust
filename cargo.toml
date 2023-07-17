@@ -1,8 +1,12 @@
 [package]
-name = "fbheap"
+name = "fibheap"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "simple but actually useful Fibonacci Heaps"
+repository = "https://github.com/orhid/fbheap.rust/tree/trunk"
+readme = "readme.md"
+license = "MIT OR Apache-2.0"
+keywords = ["fibonacci", "heap", "datastructure"]
+categories = ["data-structures"]
 
 [dependencies]
