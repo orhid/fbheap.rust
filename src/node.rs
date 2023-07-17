@@ -211,8 +211,8 @@ where
 
     fn link(&mut self, other: &mut Self) {
         let (smaller, bigger) = match self.cmp(&other) {
-            Ordering::Greater => (other, self),
-            _ => (self, other),
+            Ordering::Greater => (self, other),
+            _ => (other, self),
         };
 
         bigger.set_parent(smaller.clone());
