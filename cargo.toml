@@ -5,7 +5,7 @@ edition = "2021"
 description = "simple but actually useful Fibonacci Heaps"
 repository = "https://github.com/orhid/fbheap.rust/tree/trunk"
 readme = "readme.md"
-license = "GNU AGPLv3"
+license = "AGPL-3.0-only"
 keywords = ["fibonacci", "heap", "datastructure"]
 categories = ["data-structures"]
 
